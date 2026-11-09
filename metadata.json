@@ -1,0 +1,6 @@
+{
+  "name": "maXim ISP Billing & ERP",
+  "description": "Complete ISP Billing, RADIUS AAA, MikroTik RouterOS, Reseller, CRM Ticketing, Accounting, and Customer Self-Care Management Software modeled on maXim ISP Billing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

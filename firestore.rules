@@ -1,0 +1,832 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global Safety Net (Default-Deny Catch-All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Hardened Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrapEmail() {
+      return isVerified() && request.auth.token.email == 'rendomuser50@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapEmail() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isValidString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() >= 1 && val.size() <= maxLen;
+    }
+
+    function isValidNumber(val) {
+      return val is number && val >= -1000000000 && val <= 1000000000;
+    }
+
+    // Validation Blueprints
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['email', 'createdAt'])
+        && data.keys().hasOnly(['email', 'createdAt'])
+        && isNonEmptyString(data.email, 160)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidWorkspaceSettings(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'companyName', 'companyCode', 'phone', 'email', 'address',
+          'currency', 'bkashMerchant', 'rocketMerchant', 'nagadMerchant',
+          'paymentGatewayProvider', 'paymentGatewayEnabled', 'smsSenderId',
+          'smsMasking', 'smsBalance', 'smsRate', 'routerSandboxMode',
+          'keeperAlertOnLogin', 'btrcLicenseNo', 'seeded', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'companyName', 'companyCode', 'phone', 'email', 'address',
+          'currency', 'bkashMerchant', 'rocketMerchant', 'nagadMerchant',
+          'paymentGatewayProvider', 'paymentGatewayEnabled', 'smsSenderId',
+          'smsMasking', 'smsBalance', 'smsRate', 'routerSandboxMode',
+          'keeperAlertOnLogin', 'btrcLicenseNo', 'seeded', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.companyName, 120)
+        && isNonEmptyString(data.companyCode, 60)
+        && isValidString(data.phone, 40)
+        && isValidString(data.email, 120)
+        && isValidString(data.address, 240)
+        && isNonEmptyString(data.currency, 12)
+        && isValidString(data.bkashMerchant, 40)
+        && isValidString(data.rocketMerchant, 40)
+        && isValidString(data.nagadMerchant, 40)
+        && isValidString(data.paymentGatewayProvider, 60)
+        && data.paymentGatewayEnabled is bool
+        && isValidString(data.smsSenderId, 40)
+        && data.smsMasking is bool
+        && isValidNumber(data.smsBalance)
+        && isValidNumber(data.smsRate)
+        && data.routerSandboxMode is bool
+        && data.keeperAlertOnLogin is bool
+        && isValidString(data.btrcLicenseNo, 80)
+        && data.seeded is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPopZone(data) {
+      return data.keys().hasAll(['ownerUid', 'name', 'code', 'zoneName', 'oltInfo', 'address', 'managerName', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerUid', 'name', 'code', 'zoneName', 'oltInfo', 'address', 'managerName', 'status', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.name, 80)
+        && isNonEmptyString(data.code, 32)
+        && isValidString(data.zoneName, 80)
+        && isValidString(data.oltInfo, 120)
+        && isValidString(data.address, 200)
+        && isValidString(data.managerName, 80)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Active', 'Maintenance', 'Inactive']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidIspPackage(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'name', 'planType', 'serviceType', 'downloadMbps', 'uploadMbps',
+          'mikrotikQueue', 'monthlyRate', 'resellerRate', 'poolName', 'validityDays',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'name', 'planType', 'serviceType', 'downloadMbps', 'uploadMbps',
+          'mikrotikQueue', 'monthlyRate', 'resellerRate', 'poolName', 'validityDays',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.name, 80)
+        && data.planType is string && data.planType.size() <= 20 && data.planType in ['Prepaid', 'Postpaid', 'Hotspot', 'Corporate']
+        && data.serviceType is string && data.serviceType.size() <= 20 && data.serviceType in ['PPPoE', 'Hotspot', 'Static IP']
+        && isValidNumber(data.downloadMbps)
+        && isValidNumber(data.uploadMbps)
+        && isValidString(data.mikrotikQueue, 80)
+        && isValidNumber(data.monthlyRate)
+        && isValidNumber(data.resellerRate)
+        && isValidString(data.poolName, 60)
+        && isValidNumber(data.validityDays)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Active', 'Archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMikrotikRouter(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'name', 'host', 'apiPort', 'username', 'popName', 'model',
+          'rosVersion', 'mode', 'radiusSecret', 'status', 'activeSessions',
+          'cpuLoad', 'uptime', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'name', 'host', 'apiPort', 'username', 'popName', 'model',
+          'rosVersion', 'mode', 'radiusSecret', 'status', 'activeSessions',
+          'cpuLoad', 'uptime', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.name, 80)
+        && isNonEmptyString(data.host, 80)
+        && isValidNumber(data.apiPort)
+        && isNonEmptyString(data.username, 60)
+        && isValidString(data.popName, 80)
+        && isValidString(data.model, 60)
+        && isValidString(data.rosVersion, 32)
+        && data.mode is string && data.mode.size() <= 16 && data.mode in ['Sandbox', 'Live']
+        && isValidString(data.radiusSecret, 80)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Connected', 'Disconnected', 'Testing']
+        && isValidNumber(data.activeSessions)
+        && isValidNumber(data.cpuLoad)
+        && isValidString(data.uptime, 48)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'custId', 'username', 'password', 'name', 'mobile', 'email',
+          'address', 'nidNumber', 'popName', 'zoneName', 'packageId', 'packageName',
+          'monthlyRate', 'balance', 'billingCycle', 'expiryDate', 'lockStatus',
+          'accountStatus', 'category', 'planType', 'ipAddress', 'macAddress',
+          'mikrotikQueue', 'routerName', 'isOnline', 'lastLogout', 'iRef',
+          'resellerId', 'fiberLength', 'cpeModel', 'oltPort', 'linkRemarks',
+          'avatarType', 'mobileVerified', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'custId', 'username', 'password', 'name', 'mobile', 'email',
+          'address', 'nidNumber', 'popName', 'zoneName', 'packageId', 'packageName',
+          'monthlyRate', 'balance', 'billingCycle', 'expiryDate', 'lockStatus',
+          'accountStatus', 'category', 'planType', 'ipAddress', 'macAddress',
+          'mikrotikQueue', 'routerName', 'isOnline', 'lastLogout', 'iRef',
+          'resellerId', 'fiberLength', 'cpeModel', 'oltPort', 'linkRemarks',
+          'avatarType', 'mobileVerified', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.custId, 32)
+        && isNonEmptyString(data.username, 64)
+        && isNonEmptyString(data.password, 64)
+        && isNonEmptyString(data.name, 120)
+        && isValidString(data.mobile, 32)
+        && isValidString(data.email, 120)
+        && isValidString(data.address, 240)
+        && isValidString(data.nidNumber, 40)
+        && isValidString(data.popName, 80)
+        && isValidString(data.zoneName, 80)
+        && isValidString(data.packageId, 128)
+        && isValidString(data.packageName, 80)
+        && isValidNumber(data.monthlyRate)
+        && isValidNumber(data.balance)
+        && isValidString(data.billingCycle, 32)
+        && isValidString(data.expiryDate, 32)
+        && data.lockStatus is string && data.lockStatus.size() <= 16 && data.lockStatus in ['Unlocked', 'Locked']
+        && data.accountStatus is string && data.accountStatus.size() <= 16 && data.accountStatus in ['Active', 'Expired', 'Disabled']
+        && data.category is string && data.category.size() <= 16 && data.category in ['Regular', 'VIP', 'Free']
+        && data.planType is string && data.planType.size() <= 16 && data.planType in ['Prepaid', 'Postpaid']
+        && isValidString(data.ipAddress, 48)
+        && isValidString(data.macAddress, 32)
+        && isValidString(data.mikrotikQueue, 80)
+        && isValidString(data.routerName, 80)
+        && data.isOnline is bool
+        && isValidString(data.lastLogout, 64)
+        && isValidString(data.iRef, 64)
+        && isValidString(data.resellerId, 128)
+        && isValidString(data.fiberLength, 32)
+        && isValidString(data.cpeModel, 80)
+        && isValidString(data.oltPort, 32)
+        && isValidString(data.linkRemarks, 200)
+        && data.avatarType is string && data.avatarType.size() <= 16 && data.avatarType in ['male', 'female']
+        && data.mobileVerified is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidReseller(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'username', 'password', 'companyName', 'contactPerson',
+          'mobile', 'popName', 'balance', 'creditLimit', 'smsBalance', 'smsRate',
+          'allowedCycles', 'customRateDiscount', 'totalCustomers', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'username', 'password', 'companyName', 'contactPerson',
+          'mobile', 'popName', 'balance', 'creditLimit', 'smsBalance', 'smsRate',
+          'allowedCycles', 'customRateDiscount', 'totalCustomers', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.username, 64)
+        && isNonEmptyString(data.password, 64)
+        && isNonEmptyString(data.companyName, 120)
+        && isValidString(data.contactPerson, 100)
+        && isValidString(data.mobile, 32)
+        && isValidString(data.popName, 80)
+        && isValidNumber(data.balance)
+        && isValidNumber(data.creditLimit)
+        && isValidNumber(data.smsBalance)
+        && isValidNumber(data.smsRate)
+        && isValidString(data.allowedCycles, 120)
+        && isValidNumber(data.customRateDiscount)
+        && isValidNumber(data.totalCustomers)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Active', 'Suspended']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEmployee(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'username', 'password', 'fullName', 'mobile', 'email', 'role',
+          'department', 'allowedPops', 'allowedCashChannels', 'canEditPackage',
+          'canCollectCash', 'canManageRouter', 'canDeleteRecord', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'username', 'password', 'fullName', 'mobile', 'email', 'role',
+          'department', 'allowedPops', 'allowedCashChannels', 'canEditPackage',
+          'canCollectCash', 'canManageRouter', 'canDeleteRecord', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.username, 64)
+        && isNonEmptyString(data.password, 64)
+        && isNonEmptyString(data.fullName, 120)
+        && isValidString(data.mobile, 32)
+        && isValidString(data.email, 120)
+        && data.role is string && data.role.size() <= 32 && data.role in ['Super Admin', 'Billing', 'Support', 'NOC', 'Operations', 'POP Manager']
+        && isValidString(data.department, 64)
+        && isValidString(data.allowedPops, 200)
+        && isValidString(data.allowedCashChannels, 200)
+        && data.canEditPackage is bool
+        && data.canCollectCash is bool
+        && data.canManageRouter is bool
+        && data.canDeleteRecord is bool
+        && data.status is string && data.status.size() <= 20 && data.status in ['Active', 'Inactive']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPaymentRecord(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'trxNumber', 'targetType', 'customerId', 'customerUsername',
+          'customerName', 'amount', 'chargeAmount', 'billForMonths', 'method',
+          'channel', 'receivedBy', 'syncSource', 'senderMobile', 'status',
+          'remarks', 'oldExpiry', 'newExpiry', 'paymentDate', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'trxNumber', 'targetType', 'customerId', 'customerUsername',
+          'customerName', 'amount', 'chargeAmount', 'billForMonths', 'method',
+          'channel', 'receivedBy', 'syncSource', 'senderMobile', 'status',
+          'remarks', 'oldExpiry', 'newExpiry', 'paymentDate', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.trxNumber, 64)
+        && data.targetType is string && data.targetType.size() <= 20 && data.targetType in ['Home', 'Corporate', 'Reseller']
+        && isValidString(data.customerId, 128)
+        && isValidString(data.customerUsername, 80)
+        && isValidString(data.customerName, 120)
+        && isValidNumber(data.amount)
+        && isValidNumber(data.chargeAmount)
+        && isValidNumber(data.billForMonths)
+        && data.method is string && data.method.size() <= 32 && data.method in ['CASH', 'bKash Sync', 'Rocket Sync', 'Nagad Sync', 'Online Card', 'Bank']
+        && isValidString(data.channel, 64)
+        && isValidString(data.receivedBy, 80)
+        && isValidString(data.syncSource, 64)
+        && isValidString(data.senderMobile, 32)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Completed', 'Pending', 'Failed', 'Void']
+        && isValidString(data.remarks, 240)
+        && isValidString(data.oldExpiry, 32)
+        && isValidString(data.newExpiry, 32)
+        && isValidString(data.paymentDate, 40)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'ticketNo', 'customerId', 'customerUsername', 'customerName',
+          'contact', 'email', 'popName', 'address', 'customerBalance', 'customerExpiry',
+          'lockStatus', 'issueType', 'description', 'assignedTo', 'createdBy',
+          'status', 'priority', 'lastComment', 'smsSentCustomer', 'smsSentStaff',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'ticketNo', 'customerId', 'customerUsername', 'customerName',
+          'contact', 'email', 'popName', 'address', 'customerBalance', 'customerExpiry',
+          'lockStatus', 'issueType', 'description', 'assignedTo', 'createdBy',
+          'status', 'priority', 'lastComment', 'smsSentCustomer', 'smsSentStaff',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.ticketNo, 32)
+        && isValidString(data.customerId, 128)
+        && isValidString(data.customerUsername, 80)
+        && isValidString(data.customerName, 120)
+        && isValidString(data.contact, 32)
+        && isValidString(data.email, 120)
+        && isValidString(data.popName, 80)
+        && isValidString(data.address, 240)
+        && isValidNumber(data.customerBalance)
+        && isValidString(data.customerExpiry, 32)
+        && data.lockStatus is string && data.lockStatus.size() <= 16 && data.lockStatus in ['Unlocked', 'Locked']
+        && isNonEmptyString(data.issueType, 80)
+        && isNonEmptyString(data.description, 1000)
+        && isValidString(data.assignedTo, 80)
+        && isValidString(data.createdBy, 80)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Open', 'In Progress', 'Resolved', 'Closed']
+        && data.priority is string && data.priority.size() <= 16 && data.priority in ['Normal', 'High', 'Critical']
+        && isValidString(data.lastComment, 500)
+        && data.smsSentCustomer is bool
+        && data.smsSentStaff is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTicketComment(data) {
+      return data.keys().hasAll(['ownerUid', 'ticketId', 'author', 'authorRole', 'message', 'timestampStr', 'createdAt'])
+        && data.keys().hasOnly(['ownerUid', 'ticketId', 'author', 'authorRole', 'message', 'timestampStr', 'createdAt'])
+        && isValidId(data.ownerUid)
+        && isValidId(data.ticketId)
+        && isNonEmptyString(data.author, 80)
+        && isNonEmptyString(data.authorRole, 32)
+        && isNonEmptyString(data.message, 800)
+        && isValidString(data.timestampStr, 40)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidStaffTask(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'title', 'category', 'assignedTo', 'popName',
+          'relatedCustomer', 'dueDate', 'priority', 'status', 'notes',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'title', 'category', 'assignedTo', 'popName',
+          'relatedCustomer', 'dueDate', 'priority', 'status', 'notes',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.title, 160)
+        && isValidString(data.category, 64)
+        && isValidString(data.assignedTo, 80)
+        && isValidString(data.popName, 80)
+        && isValidString(data.relatedCustomer, 80)
+        && isValidString(data.dueDate, 32)
+        && data.priority is string && data.priority.size() <= 16 && data.priority in ['Normal', 'High', 'Urgent']
+        && data.status is string && data.status.size() <= 20 && data.status in ['Pending', 'In Progress', 'Completed']
+        && isValidString(data.notes, 500)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCorporateClient(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'companyName', 'clientCode', 'contactPerson', 'mobile',
+          'email', 'address', 'popName', 'iigMbps', 'bdixMbps', 'cacheMbps',
+          'dataConnectivityMbps', 'publicIpCount', 'serverRentQty', 'monthlyTotal',
+          'balance', 'billingCycle', 'mrtgLinkId', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'companyName', 'clientCode', 'contactPerson', 'mobile',
+          'email', 'address', 'popName', 'iigMbps', 'bdixMbps', 'cacheMbps',
+          'dataConnectivityMbps', 'publicIpCount', 'serverRentQty', 'monthlyTotal',
+          'balance', 'billingCycle', 'mrtgLinkId', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.companyName, 120)
+        && isNonEmptyString(data.clientCode, 32)
+        && isValidString(data.contactPerson, 100)
+        && isValidString(data.mobile, 32)
+        && isValidString(data.email, 120)
+        && isValidString(data.address, 240)
+        && isValidString(data.popName, 80)
+        && isValidNumber(data.iigMbps)
+        && isValidNumber(data.bdixMbps)
+        && isValidNumber(data.cacheMbps)
+        && isValidNumber(data.dataConnectivityMbps)
+        && isValidNumber(data.publicIpCount)
+        && isValidNumber(data.serverRentQty)
+        && isValidNumber(data.monthlyTotal)
+        && isValidNumber(data.balance)
+        && isValidString(data.billingCycle, 32)
+        && isValidString(data.mrtgLinkId, 64)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Active', 'Suspended']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLedgerEntry(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'entryNo', 'entryType', 'accountHead', 'channel', 'staffName',
+          'vendorName', 'invoiceRef', 'debit', 'credit', 'amount', 'status',
+          'entryDate', 'remarks', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'entryNo', 'entryType', 'accountHead', 'channel', 'staffName',
+          'vendorName', 'invoiceRef', 'debit', 'credit', 'amount', 'status',
+          'entryDate', 'remarks', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.entryNo, 40)
+        && data.entryType is string && data.entryType.size() <= 32 && data.entryType in ['Staff Cash Transfer', 'Income', 'Expense', 'Vendor Invoice', 'Vendor Payment']
+        && isValidString(data.accountHead, 80)
+        && isValidString(data.channel, 64)
+        && isValidString(data.staffName, 80)
+        && isValidString(data.vendorName, 100)
+        && isValidString(data.invoiceRef, 64)
+        && isValidNumber(data.debit)
+        && isValidNumber(data.credit)
+        && isValidNumber(data.amount)
+        && data.status is string && data.status.size() <= 20 && data.status in ['Posted', 'Pending Audit', 'Void']
+        && isValidString(data.entryDate, 32)
+        && isValidString(data.remarks, 240)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOperationalLog(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'logCategory', 'code', 'actor', 'target', 'popName',
+          'title', 'details', 'metaOne', 'metaTwo', 'numericVal', 'status',
+          'timestampStr', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'logCategory', 'code', 'actor', 'target', 'popName',
+          'title', 'details', 'metaOne', 'metaTwo', 'numericVal', 'status',
+          'timestampStr', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerUid)
+        && data.logCategory is string && data.logCategory.size() <= 24 && data.logCategory in ['sms_template', 'sms_log', 'hotspot_voucher', 'ip_log', 'audit_log']
+        && isValidString(data.code, 64)
+        && isValidString(data.actor, 80)
+        && isValidString(data.target, 120)
+        && isValidString(data.popName, 80)
+        && isValidString(data.title, 160)
+        && isValidString(data.details, 800)
+        && isValidString(data.metaOne, 120)
+        && isValidString(data.metaTwo, 120)
+        && isValidNumber(data.numericVal)
+        && isValidString(data.status, 32)
+        && isValidString(data.timestampStr, 40)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // 1. Admins Collection
+    match /admins/{adminUid} {
+      allow get: if isVerified() && isValidId(adminUid) && (request.auth.uid == adminUid || isAdmin());
+      allow list: if isBootstrapEmail();
+      allow create: if isVerified() && isValidId(adminUid) && isValidAdminRecord(incoming()) && incoming().createdAt == request.time && isBootstrapEmail();
+      allow update: if false;
+      allow delete: if isVerified() && isValidId(adminUid) && isBootstrapEmail();
+    }
+
+    // 2. Workspace Settings Collection
+    match /workspaceSettings/{workspaceId} {
+      allow get: if isVerified() && isValidId(workspaceId) && (workspaceId == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(workspaceId) && isValidWorkspaceSettings(incoming())
+        && workspaceId == request.auth.uid
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(workspaceId) && isValidWorkspaceSettings(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'companyName', 'companyCode', 'phone', 'email', 'address', 'currency',
+            'bkashMerchant', 'rocketMerchant', 'nagadMerchant', 'paymentGatewayProvider',
+            'paymentGatewayEnabled', 'smsSenderId', 'smsMasking', 'smsBalance',
+            'smsRate', 'routerSandboxMode', 'keeperAlertOnLogin', 'btrcLicenseNo',
+            'seeded', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(workspaceId) && isAdmin();
+    }
+
+    // 3. POP / Zone Collection
+    match /pops/{popId} {
+      allow get: if isVerified() && isValidId(popId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(popId) && isValidPopZone(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(popId) && isValidPopZone(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'code', 'zoneName', 'oltInfo', 'address', 'managerName', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(popId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 4. Packages Collection
+    match /packages/{packageId} {
+      allow get: if isVerified() && isValidId(packageId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(packageId) && isValidIspPackage(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(packageId) && isValidIspPackage(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'planType', 'serviceType', 'downloadMbps', 'uploadMbps',
+            'mikrotikQueue', 'monthlyRate', 'resellerRate', 'poolName',
+            'validityDays', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(packageId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 5. MikroTik Routers Collection
+    match /routers/{routerId} {
+      allow get: if isVerified() && isValidId(routerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(routerId) && isValidMikrotikRouter(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(routerId) && isValidMikrotikRouter(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'host', 'apiPort', 'username', 'popName', 'model',
+            'rosVersion', 'mode', 'radiusSecret', 'status', 'activeSessions',
+            'cpuLoad', 'uptime', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(routerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 6. Customers Collection (Contains PII - strictly isolated to ownerUid / Admin)
+    match /customers/{customerId} {
+      allow get: if isVerified() && isValidId(customerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(customerId) && isValidCustomer(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(customerId) && isValidCustomer(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && (
+            // Action 1: Billing / Recharge / Balance / Expiry update
+            incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'expiryDate', 'billingCycle', 'lockStatus', 'accountStatus', 'updatedAt']) ||
+            // Action 2: Connection / Network / Link Info update
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'packageId', 'packageName', 'monthlyRate', 'mikrotikQueue', 'routerName',
+              'ipAddress', 'macAddress', 'lockStatus', 'accountStatus', 'isOnline',
+              'lastLogout', 'fiberLength', 'cpeModel', 'oltPort', 'linkRemarks', 'updatedAt'
+            ]) ||
+            // Action 3: Profile / Credential / OTP update
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'custId', 'username', 'password', 'name', 'mobile', 'email', 'address',
+              'nidNumber', 'popName', 'zoneName', 'packageId', 'packageName', 'monthlyRate',
+              'balance', 'billingCycle', 'expiryDate', 'lockStatus', 'accountStatus',
+              'category', 'planType', 'ipAddress', 'macAddress', 'mikrotikQueue',
+              'routerName', 'isOnline', 'lastLogout', 'iRef', 'resellerId', 'fiberLength',
+              'cpeModel', 'oltPort', 'linkRemarks', 'avatarType', 'mobileVerified', 'updatedAt'
+            ])
+          )) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(customerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 7. Resellers Collection
+    match /resellers/{resellerId} {
+      allow get: if isVerified() && isValidId(resellerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(resellerId) && isValidReseller(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(resellerId) && isValidReseller(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'username', 'password', 'companyName', 'contactPerson', 'mobile',
+            'popName', 'balance', 'creditLimit', 'smsBalance', 'smsRate',
+            'allowedCycles', 'customRateDiscount', 'totalCustomers', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(resellerId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 8. Employees Collection (PII + RBAC profiles isolated to ownerUid / Admin)
+    match /employees/{employeeId} {
+      allow get: if isVerified() && isValidId(employeeId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(employeeId) && isValidEmployee(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(employeeId) && isValidEmployee(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'username', 'password', 'fullName', 'mobile', 'email', 'role',
+            'department', 'allowedPops', 'allowedCashChannels', 'canEditPackage',
+            'canCollectCash', 'canManageRouter', 'canDeleteRecord', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(employeeId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 9. Payments Collection (With Terminal State Locking on 'Void')
+    match /payments/{paymentId} {
+      allow get: if isVerified() && isValidId(paymentId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(paymentId) && isValidPaymentRecord(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(paymentId) && isValidPaymentRecord(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid
+            && existing().status != 'Void'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'remarks', 'receivedBy', 'updatedAt'])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(paymentId) && isAdmin();
+    }
+
+    // 10. Support Tickets Collection + Pillar 1 Master-Gated Comments Subcollection
+    match /tickets/{ticketId} {
+      allow get: if isVerified() && isValidId(ticketId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(ticketId) && isValidSupportTicket(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(ticketId) && isValidSupportTicket(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid
+            && existing().status != 'Closed'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'assignedTo', 'status', 'priority', 'lastComment', 'issueType',
+              'description', 'smsSentCustomer', 'smsSentStaff', 'updatedAt'
+            ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(ticketId) && (existing().ownerUid == request.auth.uid || isAdmin());
+
+      match /comments/{commentId} {
+        allow get: if isVerified() && isValidId(ticketId) && isValidId(commentId)
+          && (
+            (exists(/databases/$(database)/documents/tickets/$(ticketId))
+              && get(/databases/$(database)/documents/tickets/$(ticketId)).data.ownerUid == request.auth.uid) ||
+            isAdmin()
+          );
+        allow list: if isVerified() && isValidId(ticketId) && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+        allow create: if isVerified() && isValidId(ticketId) && isValidId(commentId) && isValidTicketComment(incoming())
+          && incoming().ownerUid == request.auth.uid
+          && incoming().ticketId == ticketId
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/tickets/$(ticketId))
+          && (get(/databases/$(database)/documents/tickets/$(ticketId)).data.ownerUid == request.auth.uid || isAdmin());
+        allow update: if false;
+        allow delete: if isVerified() && isValidId(ticketId) && isValidId(commentId) && isAdmin();
+      }
+    }
+
+    // 11. Staff Tasks Collection
+    match /tasks/{taskId} {
+      allow get: if isVerified() && isValidId(taskId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(taskId) && isValidStaffTask(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(taskId) && isValidStaffTask(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'category', 'assignedTo', 'popName', 'relatedCustomer',
+            'dueDate', 'priority', 'status', 'notes', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(taskId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 12. Corporate & Bulk Bandwidth Collection
+    match /corporateClients/{corpId} {
+      allow get: if isVerified() && isValidId(corpId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(corpId) && isValidCorporateClient(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(corpId) && isValidCorporateClient(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'companyName', 'clientCode', 'contactPerson', 'mobile', 'email',
+            'address', 'popName', 'iigMbps', 'bdixMbps', 'cacheMbps',
+            'dataConnectivityMbps', 'publicIpCount', 'serverRentQty',
+            'monthlyTotal', 'balance', 'billingCycle', 'mrtgLinkId', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(corpId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 13. Ledger Entries Collection (With Terminal State Locking on 'Void')
+    match /ledgerEntries/{entryId} {
+      allow get: if isVerified() && isValidId(entryId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(entryId) && isValidLedgerEntry(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(entryId) && isValidLedgerEntry(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid
+            && existing().status != 'Void'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'remarks', 'channel', 'updatedAt'])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(entryId) && isAdmin();
+    }
+
+    // 14. Operational Logs Collection (SMS, Hotspot Vouchers, IP Logs, Audit Logs)
+    match /operationalLogs/{logId} {
+      allow get: if isVerified() && isValidId(logId) && (existing().ownerUid == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (resource.data.ownerUid == request.auth.uid || isBootstrapEmail());
+      allow create: if isVerified() && isValidId(logId) && isValidOperationalLog(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(logId) && isValidOperationalLog(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'details', 'metaOne', 'metaTwo', 'numericVal', 'status', 'updatedAt'
+          ])) ||
+          isAdmin()
+        );
+      allow delete: if isVerified() && isValidId(logId) && (existing().ownerUid == request.auth.uid || isAdmin());
+    }
+  }
+}

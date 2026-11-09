@@ -1,0 +1,496 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Elevated system administrator identity record.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "WorkspaceSettings": {
+      "title": "WorkspaceSettings",
+      "description": "ISP company configuration, payment sync, SMS gateway, and router sandbox preferences.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "maxLength": 120 },
+        "companyCode": { "type": "string", "maxLength": 60 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 240 },
+        "currency": { "type": "string", "maxLength": 12 },
+        "bkashMerchant": { "type": "string", "maxLength": 40 },
+        "rocketMerchant": { "type": "string", "maxLength": 40 },
+        "nagadMerchant": { "type": "string", "maxLength": 40 },
+        "paymentGatewayProvider": { "type": "string", "maxLength": 60 },
+        "paymentGatewayEnabled": { "type": "boolean" },
+        "smsSenderId": { "type": "string", "maxLength": 40 },
+        "smsMasking": { "type": "boolean" },
+        "smsBalance": { "type": "number" },
+        "smsRate": { "type": "number" },
+        "routerSandboxMode": { "type": "boolean" },
+        "keeperAlertOnLogin": { "type": "boolean" },
+        "btrcLicenseNo": { "type": "string", "maxLength": 80 },
+        "seeded": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "companyName", "companyCode", "phone", "email", "address",
+        "currency", "bkashMerchant", "rocketMerchant", "nagadMerchant",
+        "paymentGatewayProvider", "paymentGatewayEnabled", "smsSenderId",
+        "smsMasking", "smsBalance", "smsRate", "routerSandboxMode",
+        "keeperAlertOnLogin", "btrcLicenseNo", "seeded", "createdAt", "updatedAt"
+      ]
+    },
+    "PopZone": {
+      "title": "PopZone",
+      "description": "Point of Presence (POP) and coverage zone definition.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 80 },
+        "code": { "type": "string", "maxLength": 32 },
+        "zoneName": { "type": "string", "maxLength": 80 },
+        "oltInfo": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 200 },
+        "managerName": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["Active", "Maintenance", "Inactive"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerUid", "name", "code", "zoneName", "oltInfo", "address", "managerName", "status", "createdAt", "updatedAt"]
+    },
+    "IspPackage": {
+      "title": "IspPackage",
+      "description": "PPPoE, Hotspot, or Corporate bandwidth plan and MikroTik queue profile.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 80 },
+        "planType": { "type": "string", "enum": ["Prepaid", "Postpaid", "Hotspot", "Corporate"], "maxLength": 20 },
+        "serviceType": { "type": "string", "enum": ["PPPoE", "Hotspot", "Static IP"], "maxLength": 20 },
+        "downloadMbps": { "type": "number" },
+        "uploadMbps": { "type": "number" },
+        "mikrotikQueue": { "type": "string", "maxLength": 80 },
+        "monthlyRate": { "type": "number" },
+        "resellerRate": { "type": "number" },
+        "poolName": { "type": "string", "maxLength": 60 },
+        "validityDays": { "type": "number" },
+        "status": { "type": "string", "enum": ["Active", "Archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "name", "planType", "serviceType", "downloadMbps", "uploadMbps",
+        "mikrotikQueue", "monthlyRate", "resellerRate", "poolName", "validityDays",
+        "status", "createdAt", "updatedAt"
+      ]
+    },
+    "MikrotikRouter": {
+      "title": "MikrotikRouter",
+      "description": "MikroTik RouterOS NAS and RADIUS client configuration.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 80 },
+        "host": { "type": "string", "maxLength": 80 },
+        "apiPort": { "type": "number" },
+        "username": { "type": "string", "maxLength": 60 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "model": { "type": "string", "maxLength": 60 },
+        "rosVersion": { "type": "string", "maxLength": 32 },
+        "mode": { "type": "string", "enum": ["Sandbox", "Live"], "maxLength": 16 },
+        "radiusSecret": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["Active", "Connected", "Disconnected", "Testing", "Maintenance"], "maxLength": 20 },
+        "activeSessions": { "type": "number" },
+        "cpuLoad": { "type": "number" },
+        "uptime": { "type": "string", "maxLength": 48 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "name", "host", "apiPort", "username", "popName", "model",
+        "rosVersion", "mode", "radiusSecret", "status", "activeSessions",
+        "cpuLoad", "uptime", "createdAt", "updatedAt"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Home, VIP, or Free broadband subscriber profile, billing state, and fiber link info.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "custId": { "type": "string", "maxLength": 32 },
+        "username": { "type": "string", "maxLength": 64 },
+        "password": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 120 },
+        "mobile": { "type": "string", "maxLength": 32 },
+        "email": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 240 },
+        "nidNumber": { "type": "string", "maxLength": 40 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "zoneName": { "type": "string", "maxLength": 80 },
+        "packageId": { "type": "string", "maxLength": 128 },
+        "packageName": { "type": "string", "maxLength": 80 },
+        "monthlyRate": { "type": "number" },
+        "balance": { "type": "number" },
+        "billingCycle": { "type": "string", "maxLength": 32 },
+        "expiryDate": { "type": "string", "maxLength": 32 },
+        "lockStatus": { "type": "string", "enum": ["Unlocked", "Locked"], "maxLength": 16 },
+        "accountStatus": { "type": "string", "enum": ["Active", "Expired", "Disabled"], "maxLength": 16 },
+        "category": { "type": "string", "enum": ["Regular", "VIP", "Free"], "maxLength": 16 },
+        "planType": { "type": "string", "enum": ["Prepaid", "Postpaid"], "maxLength": 16 },
+        "ipAddress": { "type": "string", "maxLength": 48 },
+        "macAddress": { "type": "string", "maxLength": 32 },
+        "mikrotikQueue": { "type": "string", "maxLength": 80 },
+        "routerName": { "type": "string", "maxLength": 80 },
+        "isOnline": { "type": "boolean" },
+        "lastLogout": { "type": "string", "maxLength": 64 },
+        "iRef": { "type": "string", "maxLength": 64 },
+        "resellerId": { "type": "string", "maxLength": 128 },
+        "fiberLength": { "type": "string", "maxLength": 32 },
+        "cpeModel": { "type": "string", "maxLength": 80 },
+        "oltPort": { "type": "string", "maxLength": 32 },
+        "linkRemarks": { "type": "string", "maxLength": 200 },
+        "avatarType": { "type": "string", "enum": ["male", "female"], "maxLength": 16 },
+        "mobileVerified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "custId", "username", "password", "name", "mobile", "email",
+        "address", "nidNumber", "popName", "zoneName", "packageId", "packageName",
+        "monthlyRate", "balance", "billingCycle", "expiryDate", "lockStatus",
+        "accountStatus", "category", "planType", "ipAddress", "macAddress",
+        "mikrotikQueue", "routerName", "isOnline", "lastLogout", "iRef",
+        "resellerId", "fiberLength", "cpeModel", "oltPort", "linkRemarks",
+        "avatarType", "mobileVerified", "createdAt", "updatedAt"
+      ]
+    },
+    "Reseller": {
+      "title": "Reseller",
+      "description": "Prepaid SDT or Sub-Dealer reseller account with overdraft limit and SMS balance.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "maxLength": 64 },
+        "password": { "type": "string", "maxLength": 64 },
+        "companyName": { "type": "string", "maxLength": 120 },
+        "contactPerson": { "type": "string", "maxLength": 100 },
+        "mobile": { "type": "string", "maxLength": 32 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "balance": { "type": "number" },
+        "creditLimit": { "type": "number" },
+        "smsBalance": { "type": "number" },
+        "smsRate": { "type": "number" },
+        "allowedCycles": { "type": "string", "maxLength": 120 },
+        "customRateDiscount": { "type": "number" },
+        "totalCustomers": { "type": "number" },
+        "status": { "type": "string", "enum": ["Active", "Suspended"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "username", "password", "companyName", "contactPerson",
+        "mobile", "popName", "balance", "creditLimit", "smsBalance", "smsRate",
+        "allowedCycles", "customRateDiscount", "totalCustomers", "status",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "ISP staff member with role, POP restriction, and allowed cash/bank entry channels.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "username": { "type": "string", "maxLength": 64 },
+        "password": { "type": "string", "maxLength": 64 },
+        "fullName": { "type": "string", "maxLength": 120 },
+        "mobile": { "type": "string", "maxLength": 32 },
+        "email": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["Super Admin", "Billing", "Support", "NOC", "Operations", "POP Manager"], "maxLength": 32 },
+        "department": { "type": "string", "maxLength": 64 },
+        "allowedPops": { "type": "string", "maxLength": 200 },
+        "allowedCashChannels": { "type": "string", "maxLength": 200 },
+        "canEditPackage": { "type": "boolean" },
+        "canCollectCash": { "type": "boolean" },
+        "canManageRouter": { "type": "boolean" },
+        "canDeleteRecord": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "username", "password", "fullName", "mobile", "email", "role",
+        "department", "allowedPops", "allowedCashChannels", "canEditPackage",
+        "canCollectCash", "canManageRouter", "canDeleteRecord", "status",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Subscriber or reseller recharge, cash receipt, Payment Sync, or online gateway transaction.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "trxNumber": { "type": "string", "maxLength": 64 },
+        "targetType": { "type": "string", "enum": ["Home", "Corporate", "Reseller"], "maxLength": 20 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerUsername": { "type": "string", "maxLength": 80 },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "amount": { "type": "number" },
+        "chargeAmount": { "type": "number" },
+        "billForMonths": { "type": "number" },
+        "method": { "type": "string", "enum": ["CASH", "bKash Sync", "Rocket Sync", "Nagad Sync", "Online Card", "Bank"], "maxLength": 32 },
+        "channel": { "type": "string", "maxLength": 64 },
+        "receivedBy": { "type": "string", "maxLength": 80 },
+        "syncSource": { "type": "string", "maxLength": 64 },
+        "senderMobile": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["Completed", "Pending", "Failed", "Void"], "maxLength": 20 },
+        "remarks": { "type": "string", "maxLength": 240 },
+        "oldExpiry": { "type": "string", "maxLength": 32 },
+        "newExpiry": { "type": "string", "maxLength": 32 },
+        "paymentDate": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "trxNumber", "targetType", "customerId", "customerUsername",
+        "customerName", "amount", "chargeAmount", "billForMonths", "method",
+        "channel", "receivedBy", "syncSource", "senderMobile", "status",
+        "remarks", "oldExpiry", "newExpiry", "paymentDate", "createdAt", "updatedAt"
+      ]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "CRM support complaint ticket raised by staff or customer portal.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ticketNo": { "type": "string", "maxLength": 32 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerUsername": { "type": "string", "maxLength": 80 },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "contact": { "type": "string", "maxLength": 32 },
+        "email": { "type": "string", "maxLength": 120 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "address": { "type": "string", "maxLength": 240 },
+        "customerBalance": { "type": "number" },
+        "customerExpiry": { "type": "string", "maxLength": 32 },
+        "lockStatus": { "type": "string", "enum": ["Unlocked", "Locked"], "maxLength": 16 },
+        "issueType": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "assignedTo": { "type": "string", "maxLength": 80 },
+        "createdBy": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Resolved", "Closed"], "maxLength": 20 },
+        "priority": { "type": "string", "enum": ["Normal", "High", "Critical"], "maxLength": 16 },
+        "lastComment": { "type": "string", "maxLength": 500 },
+        "smsSentCustomer": { "type": "boolean" },
+        "smsSentStaff": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "ticketNo", "customerId", "customerUsername", "customerName",
+        "contact", "email", "popName", "address", "customerBalance", "customerExpiry",
+        "lockStatus", "issueType", "description", "assignedTo", "createdBy",
+        "status", "priority", "lastComment", "smsSentCustomer", "smsSentStaff",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "TicketComment": {
+      "title": "TicketComment",
+      "description": "Threaded reply on a support ticket.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ticketId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "author": { "type": "string", "maxLength": 80 },
+        "authorRole": { "type": "string", "maxLength": 32 },
+        "message": { "type": "string", "maxLength": 800 },
+        "timestampStr": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerUid", "ticketId", "author", "authorRole", "message", "timestampStr", "createdAt"]
+    },
+    "StaffTask": {
+      "title": "StaffTask",
+      "description": "Operational or field engineering task assigned to staff.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 64 },
+        "assignedTo": { "type": "string", "maxLength": 80 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "relatedCustomer": { "type": "string", "maxLength": 80 },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "priority": { "type": "string", "enum": ["Normal", "High", "Urgent"], "maxLength": 16 },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"], "maxLength": 20 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "title", "category", "assignedTo", "popName",
+        "relatedCustomer", "dueDate", "priority", "status", "notes",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "CorporateClient": {
+      "title": "CorporateClient",
+      "description": "Corporate customer or Bulk Bandwidth + VAS subscriber.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "companyName": { "type": "string", "maxLength": 120 },
+        "clientCode": { "type": "string", "maxLength": 32 },
+        "contactPerson": { "type": "string", "maxLength": 100 },
+        "mobile": { "type": "string", "maxLength": 32 },
+        "email": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 240 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "iigMbps": { "type": "number" },
+        "bdixMbps": { "type": "number" },
+        "cacheMbps": { "type": "number" },
+        "dataConnectivityMbps": { "type": "number" },
+        "publicIpCount": { "type": "number" },
+        "serverRentQty": { "type": "number" },
+        "monthlyTotal": { "type": "number" },
+        "balance": { "type": "number" },
+        "billingCycle": { "type": "string", "maxLength": 32 },
+        "mrtgLinkId": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Active", "Suspended"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "companyName", "clientCode", "contactPerson", "mobile",
+        "email", "address", "popName", "iigMbps", "bdixMbps", "cacheMbps",
+        "dataConnectivityMbps", "publicIpCount", "serverRentQty", "monthlyTotal",
+        "balance", "billingCycle", "mrtgLinkId", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "LedgerEntry": {
+      "title": "LedgerEntry",
+      "description": "Accounting entry for Staff Cash Transfer, Income, Expense, or Vendor Invoice/Payment.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "entryNo": { "type": "string", "maxLength": 40 },
+        "entryType": { "type": "string", "enum": ["Staff Cash Transfer", "Income", "Expense", "Vendor Invoice", "Vendor Payment"], "maxLength": 32 },
+        "accountHead": { "type": "string", "maxLength": 80 },
+        "channel": { "type": "string", "maxLength": 64 },
+        "staffName": { "type": "string", "maxLength": 80 },
+        "vendorName": { "type": "string", "maxLength": 100 },
+        "invoiceRef": { "type": "string", "maxLength": 64 },
+        "debit": { "type": "number" },
+        "credit": { "type": "number" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Posted", "Pending Audit", "Void"], "maxLength": 20 },
+        "entryDate": { "type": "string", "maxLength": 32 },
+        "remarks": { "type": "string", "maxLength": 240 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "entryNo", "entryType", "accountHead", "channel", "staffName",
+        "vendorName", "invoiceRef", "debit", "credit", "amount", "status",
+        "entryDate", "remarks", "createdAt", "updatedAt"
+      ]
+    },
+    "OperationalLog": {
+      "title": "OperationalLog",
+      "description": "SMS templates/logs, Hotspot vouchers, BTRC IP NAT logs, and system audit records.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "logCategory": { "type": "string", "enum": ["sms_template", "sms_log", "hotspot_voucher", "ip_log", "audit_log"], "maxLength": 24 },
+        "code": { "type": "string", "maxLength": 64 },
+        "actor": { "type": "string", "maxLength": 80 },
+        "target": { "type": "string", "maxLength": 120 },
+        "popName": { "type": "string", "maxLength": 80 },
+        "title": { "type": "string", "maxLength": 160 },
+        "details": { "type": "string", "maxLength": 800 },
+        "metaOne": { "type": "string", "maxLength": 120 },
+        "metaTwo": { "type": "string", "maxLength": 120 },
+        "numericVal": { "type": "number" },
+        "status": { "type": "string", "maxLength": 32 },
+        "timestampStr": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "logCategory", "code", "actor", "target", "popName",
+        "title", "details", "metaOne", "metaTwo", "numericVal", "status",
+        "timestampStr", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminUid}": {
+      "schema": "AdminRecord",
+      "description": "Elevated system administrator lookup collection."
+    },
+    "/workspaceSettings/{workspaceId}": {
+      "schema": "WorkspaceSettings",
+      "description": "ISP tenant system configuration keyed by ownerUid."
+    },
+    "/pops/{popId}": {
+      "schema": "PopZone",
+      "description": "Point of Presence and coverage zone records."
+    },
+    "/packages/{packageId}": {
+      "schema": "IspPackage",
+      "description": "ISP PPPoE, Hotspot, and Static IP tariff plans."
+    },
+    "/routers/{routerId}": {
+      "schema": "MikrotikRouter",
+      "description": "MikroTik RouterOS NAS routers."
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Home, VIP, and Free subscriber accounts."
+    },
+    "/resellers/{resellerId}": {
+      "schema": "Reseller",
+      "description": "Prepaid SDT and sub-dealer reseller accounts."
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "ISP staff profiles and RBAC configurations."
+    },
+    "/payments/{paymentId}": {
+      "schema": "PaymentRecord",
+      "description": "Invoices, recharges, cash entries, and Payment Sync records."
+    },
+    "/tickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "CRM support complaint tickets."
+    },
+    "/tickets/{ticketId}/comments/{commentId}": {
+      "schema": "TicketComment",
+      "description": "Threaded replies under a support ticket."
+    },
+    "/tasks/{taskId}": {
+      "schema": "StaffTask",
+      "description": "Internal engineering and operational tasks."
+    },
+    "/corporateClients/{corpId}": {
+      "schema": "CorporateClient",
+      "description": "Corporate and Bulk Bandwidth + VAS subscribers."
+    },
+    "/ledgerEntries/{entryId}": {
+      "schema": "LedgerEntry",
+      "description": "Cashbook, staff cash transfers, income, expense, and vendor ledger records."
+    },
+    "/operationalLogs/{logId}": {
+      "schema": "OperationalLog",
+      "description": "SMS templates/logs, Hotspot vouchers, BTRC IP logs, and system audit records."
+    }
+  }
+}
